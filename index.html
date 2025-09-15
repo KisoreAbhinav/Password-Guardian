@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intelli-Pass - Advanced Password Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="intellicss.css" rel="stylesheet">
+<link rel="icon" type="image/png" href="icon.png">
+<!-- Chart.js & Cytoscape.js for graphs -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape/dist/cytoscape.min.js"></script>
+</head>
+<body>
+
+<!-- Background / Shapes / Particles -->
+<div class="grid-bg"></div>
+<div class="gradient-overlay"></div>
+<div class="scanlines"></div>
+<div class="shapes-container">
+    <div class="shape shape-circle"></div>
+    <div class="shape shape-triangle"></div>
+    <div class="shape shape-square"></div>
+</div>
+<div id="particles"></div>
+
+<!-- Navigation -->
+<nav id="navbar">
+    <div class="nav-container">
+        <a href="#home" class="logo-link">
+            <svg class="logo-svg" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#FF5E00;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#00B2FF;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <polygon points="20,2 38,14 38,26 20,38 2,26 2,14" fill="none" stroke="url(#logoGradient)" stroke-width="2"/>
+                <polygon points="20,8 32,16 32,24 20,32 8,24 8,16" fill="url(#logoGradient)" opacity="0.3"/>
+                <circle cx="20" cy="20" r="3" fill="url(#logoGradient)"/>
+            </svg>
+            <span class="logo-text">Intelli-Pass</span>
+        </a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#home" class="nav-link">Home</a></li>
+            <li><a href="#features" class="nav-link">Features</a></li>
+            <li><a href="#analyze" class="nav-link">Analyze</a></li>
+        </ul>
+        <div class="menu-toggle" id="menuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero" id="home">
+    <div class="hero-content">
+        <div class="text-rotator">
+            <div class="text-set active">
+                <h1 class="glitch-text" data-text="SECURE YOUR PASSWORDS">SECURE YOUR PASSWORDS</h1>
+                <p class="subtitle">Intelligent analysis for stronger, safer credentials</p>
+            </div>
+            <div class="text-set">
+                <h1 class="glitch-text" data-text="VISUALIZE STRENGTH">VISUALIZE STRENGTH</h1>
+                <p class="subtitle">Graphical insights reveal weaknesses and patterns in your passwords</p>
+            </div>
+            <div class="text-set">
+                <h1 class="glitch-text" data-text="SMART SUGGESTIONS">SMART SUGGESTIONS</h1>
+                <p class="subtitle">Get actionable advice to enhance password security and reduce risks</p>
+            </div>
+        </div>
+    </div>
+    <div class="cta-container">
+        <a href="#features" class="cta-button cta-primary">Info</a>
+        <a href="#analyze" class="cta-button cta-secondary">Analyze Password</a>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features" id="features">
+    <h2 class="section-title">Key Features</h2>
+    <div class="features-container">
+        <div class="feature-tabs">
+            <div class="tab-item active" data-tab="analysis"><span class="tab-icon">🔍</span><span>Analysis</span></div>
+            <div class="tab-item" data-tab="entropy"><span class="tab-icon">📊</span><span>Entropy</span></div>
+            <div class="tab-item" data-tab="graph"><span class="tab-icon">🎨</span><span>Graphs</span></div>
+            <div class="tab-item" data-tab="collision"><span class="tab-icon">⚠️</span><span>Collision Risk</span></div>
+            <div class="tab-item" data-tab="suggestions"><span class="tab-icon">💡</span><span>Suggestions</span></div>
+        </div>
+        <div class="feature-content">
+            <div class="content-panel active" id="analysis">
+                <h3>Detailed Password Analysis</h3>
+                <ul class="feature-list">
+                    <li>Lowercase, Uppercase, Digit & Special character analysis</li>
+                    <li>Length and category scoring</li>
+                    <li>Transition and sequence detection</li>
+                    <li>Real-time assessment</li>
+                </ul>
+            </div>
+            <div class="content-panel" id="entropy">
+                <h3>Entropy Scoring</h3>
+                <ul class="feature-list">
+                    <li>Per-character entropy analysis</li>
+                    <li>Length-adjusted entropy scoring</li>
+                    <li>Category and chromatic number impact</li>
+                </ul>
+            </div>
+            <div class="content-panel" id="graph">
+                <h3>Visual Graph Insights</h3>
+                <ul class="feature-list">
+                    <li>Transition graphs with edge weights</li>
+                    <li>Chromatic number analysis</li>
+                    <li>Color-coded character categories</li>
+                    <li>Interactive visualization of password structure</li>
+                </ul>
+            </div>
+            <div class="content-panel" id="collision">
+                <h3>Collision Risk Assessment</h3>
+                <ul class="feature-list">
+                    <li>User population simulation</li>
+                    <li>Probability metrics for password duplication</li>
+                    <li>Highlight high-risk patterns</li>
+                </ul>
+            </div>
+            <div class="content-panel" id="suggestions">
+                <h3>Smart Suggestions</h3>
+                <ul class="feature-list">
+                    <li>Identify missing character types</li>
+                    <li>Mix predictable sequences</li>
+                    <li>Increase overall entropy</li>
+                    <li>Reduce collision risks</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Analyze Section -->
+<section class="analyze" id="analyze">
+  <h2 class="section-title">Analyze Your Password</h2>
+  <div class="analyze-container glass">
+    <!-- Password Input & Button -->
+    <input type="text" id="passwordInput" placeholder="Enter your password (max 16 chars)">
+    <button class="cta-button cta-primary" id="analyzeBtn">Analyze</button>
+
+    <!-- 🔥 Password Strength Bar -->
+    <div id="strengthContainer" style="margin-top:20px;">
+      <div id="strengthBar" style="height:20px;width:0;background:#FF3B3B;transition:width 0.8s ease;border-radius:8px;"></div>
+      <p id="strengthText" style="color:white;margin-top:8px;font-family:'Rajdhani',sans-serif;">Password Strength: 0/100 (Weak)</p>
+    </div>
+
+    <!-- Metrics Output -->
+    <div id="metricsOutput" class="metrics-output"></div>
+
+    <!-- Graphs side by side -->
+    <div class="graphs-container">
+      <canvas id="radarChart"></canvas>
+      <div id="transitionGraph"></div>
+    </div>
+
+    <!-- Suggestions Output -->
+    <div id="suggestionsOutput" class="suggestions-output"></div>
+  </div>
+</section>
+
+<!-- Contact -->
+<section class="contact" id="contact">
+    <h2 class="section-title">Get In Touch</h2>
+    <div class="contact-container">
+        <div class="contact-form">
+            <form id="contactForm">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" id="subject" name="subject" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Send Message</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <div class="footer-content">
+        <div class="footer-links">
+            <a href="#privacy">Privacy Policy</a>
+            <a href="#terms">Terms of Service</a>
+        </div>
+        <p class="copyright">© 2025 Intelli-Pass. All rights reserved. A Project By Abhinav Kisore</p>
+    </div>
+</footer>
+
+<!-- Feature Tabs + Analyze Scripts -->
+<script>
+const tabs = document.querySelectorAll('.tab-item');
+const panels = document.querySelectorAll('.content-panel');
+tabs.forEach(tab=>{
+    tab.addEventListener('click',()=>{
+        const targetId = tab.getAttribute('data-tab');
+        tabs.forEach(t=>t.classList.remove('active'));
+        panels.forEach(p=>p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(targetId).classList.add('active');
+    });
+});
+
+// Transition Graph Renderer
+function renderTransitionGraph(password) {
+    const nodes = [];
+    const edges = [];
+    const addedNodes = new Set();
+
+    for (let c of password) {
+        if (!addedNodes.has(c)) {
+            nodes.push({ data: { id: c, label: c } });
+            addedNodes.add(c);
+        }
+    }
+
+    for (let i = 0; i < password.length - 1; i++) {
+        edges.push({
+            data: {
+                id: password[i]+password[i+1],
+                source: password[i],
+                target: password[i+1],
+                weight: 1
+            }
+        });
+    }
+
+    cytoscape({
+        container: document.getElementById('transitionGraph'),
+        elements: { nodes: nodes, edges: edges },
+        style: [
+            { selector: 'node', style: { 'label': 'data(label)', 'text-valign': 'center', 'color': '#fff', 'background-color': '#0074D9', 'width': 40, 'height': 40, 'font-size': 14 }},
+            { selector: 'edge', style: { 'width': 3, 'line-color': '#FF4136', 'target-arrow-color': '#FF4136', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier' }}
+        ],
+        layout: { name: 'circle' }
+    });
+}
+
+// Suggestions Renderer
+function renderSuggestions(password) {
+    const suggestionsDiv = document.getElementById('suggestionsOutput');
+    suggestionsDiv.innerHTML = ''; 
+    if (!password) return;
+
+    const lowercase = /[a-z]/.test(password);
+    const uppercase = /[A-Z]/.test(password);
+    const digit = /\d/.test(password);
+    const special = /[^a-zA-Z0-9]/.test(password);
+
+    const suggestions = [];
+    if (password.length < 8) suggestions.push("Make your password longer (at least 8 characters).");
+
+    const missingTypes = [];
+    if (!lowercase) missingTypes.push("lowercase letters");
+    if (!uppercase) missingTypes.push("uppercase letters");
+    if (!digit) missingTypes.push("digits");
+    if (!special) missingTypes.push("special symbols");
+    if (missingTypes.length > 0) suggestions.push("Add more character types: " + missingTypes.join(", ") + ".");
+
+    if (/(.)\1{2,}/.test(password)) suggestions.push("Avoid repeating characters like 'aaa' or '111'.");
+
+    if (password.length >= 8 && lowercase && uppercase && digit && special) {
+        suggestions.push("Your password covers all categories. Consider increasing length or adding uncommon symbols for higher security.");
+    }
+
+    suggestions.forEach(s => {
+        const p = document.createElement("p");
+        p.innerHTML = `💡 <span style="color:#fff;">${s}</span>`;
+        p.style.marginBottom = "10px";
+        suggestionsDiv.appendChild(p);
+    });
+}
+
+// Analyze Button Click
+document.getElementById('analyzeBtn').addEventListener('click', () => {
+    const pwd = document.getElementById('passwordInput').value;
+    renderTransitionGraph(pwd);
+    renderSuggestions(pwd);
+
+    // Strength Bar update
+    const bar = document.getElementById("strengthBar");
+    const text = document.getElementById("strengthText");
+    let score = Math.min(100, pwd.length * 6); // simple length-based for demo
+    let qualitative = score < 40 ? "Weak" : score < 70 ? "Medium" : "Strong";
+
+    bar.style.width = "0%"; // reset
+    let start = null;
+    function animateBar(ts) {
+        if (!start) start = ts;
+        let progress = (ts - start) / 800;
+        if (progress > 1) progress = 1;
+        let newWidth = score * progress;
+        bar.style.width = newWidth + "%";
+        if (progress < 1) requestAnimationFrame(animateBar);
+    }
+    requestAnimationFrame(animateBar);
+
+    if(score < 40) bar.style.background = "#FF3B3B";
+    else if(score < 70) bar.style.background = "#FFD93B";
+    else bar.style.background = "#3BFF5B";
+
+    text.textContent = `Password Strength: ${score}/100 (${qualitative})`;
+});
+</script>
+
+<script src="intelliscript.js"></script>
+</body>
+</html>
