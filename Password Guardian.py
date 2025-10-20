@@ -280,19 +280,17 @@ else:
     personal_info_score = 1.0
 #--------------------------------------------------------------------------#
 
+
 #---------------------------- Phase 3.9 -> Dictionary Fuzziness Check ----------------------------#
 exclude_list = []
 
-# Name fragments
 if len(user_name) >= 3:
     for i in range(len(user_name)-2):
         exclude_list.append(user_name[i:i+3].lower())
 
-# DOB fragments
 dob_clean = re.split(r'[-/]', user_dob)
 dob_parts = [p.lower() for p in dob_clean if p]
 
-# Month variants
 month_variants = []
 for part in dob_parts:
     try:
@@ -304,11 +302,9 @@ for part in dob_parts:
         pass
 dob_parts.extend(month_variants)
 
-# Combine all exclusions
 exclude_list.extend(dob_parts)
-exclude_list = list(set([frag for frag in exclude_list if frag]))  # remove duplicates & empties
+exclude_list = list(set([frag for frag in exclude_list if frag]))  
 
-# Load dictionary
 dictionary_file = os.path.join(BASE_DIR, "words.txt")
 with open(dictionary_file, "r", encoding="utf-8") as f:
     dictionary_words = [line.strip().lower() for line in f if line.strip()]
@@ -318,15 +314,24 @@ min_sub_len = 3
 max_similarity = 0
 
 for word in dictionary_words:
-    if word in exclude_list:  # skip user-specific words
+    if word in exclude_list:
         continue
     for i in range(len(password_lower)):
         for j in range(i + min_sub_len, len(password_lower) + 1):
             substring = password_lower[i:j]
-            similarity = SequenceMatcher(None, substring, word).ratio()
-            max_similarity = max(max_similarity, similarity)
 
-fuzzy_word_score = 1 - max_similarity
+            # skip mostly symbols/digits
+            if sum(c.isalpha() for c in substring) < 2:
+                continue
+
+            similarity = SequenceMatcher(None, substring, word).ratio()
+
+            # Only consider meaningful matches
+            if len(substring) >= 4 and similarity >= 0.75:
+                max_similarity = max(max_similarity, similarity)
+
+
+fuzzy_word_score = 1 - max_similarity if max_similarity > 0 else 1
 
 print("\nDictionary Fuzziness Report")
 print(f"Max similarity with dictionary words -> {max_similarity:.2f}")
@@ -335,7 +340,7 @@ print(f"Fuzzy Word Score (1 = safe, 0 = contains dictionary words) -> {fuzzy_wor
 #--------------------------------------------------------------------------#
 
 
-#                 Phase 3.10 -> Leaked Passwords Dataset Check (Fast)
+#                 Phase 3.10 -> Leaked Passwords Dataset Check
 #--------------------------------------------------------------------------#
 print("\nLeaked Passwords Check")
 leaked_file = os.path.join(BASE_DIR, "leaked.txt")
@@ -377,12 +382,16 @@ else:
 
 #                 Phase 4 -> Computing Password Strength
 #--------------------------------------------------------------------------#
-max_entropy = math.log2(pool_size) if pool_size > 0 else 1
-entropy_score = entropy / max_entropy 
+if pool_size > 0 and length > 0:
+    max_entropy = math.log2(pow(pool_size, length))
+else:
+    max_entropy = 1
+
+entropy_score = min(entropy_length_adjusted / max_entropy, 1)
 
 length_score = min(length / 16, 1) 
 category_score = categories_present / 4  
-chromatic_score = chromatic_number / len(G.nodes) if len(G.nodes) > 0 else 0
+chromatic_score = min(chromatic_number / 4, 1)
 
 if edge_weights:
     avg_edge_weight = sum(edge_weights) / len(edge_weights)
@@ -402,18 +411,18 @@ else:
     length_penalty = 1.0
 
 final_score = (
-    0.30 * entropy_score +
-    0.18 * length_score +
-    0.15 * category_score +
-    0.10 * chromatic_score +
-    0.10 * edge_score +
+    0.35 * entropy_score +
+    0.22 * length_score +
+    0.18 * category_score +
+    0.05 * chromatic_score +
+    0.05 * edge_score +
     0.05 * collision_score +
-    0.05 * personal_info_score+
-    0.07 * fuzzy_word_score
+    0.05 * personal_info_score +
+    0.05 * fuzzy_word_score
 )
 
 final_score *= length_penalty
-strength_percent = (final_score**1.2) * 100
+strength_percent = (final_score**1.1) * 100
 
 print("\nFinal Password Strength Report")
 print(f"Entropy Score\t\t-> {entropy_score:.2f}")
@@ -423,6 +432,7 @@ print(f"Chromatic Score\t\t-> {chromatic_score:.2f}")
 print(f"Edge Score\t\t-> {edge_score:.2f}")
 print(f"Collision Score\t\t-> {collision_score:.2f}")
 print(f"Input Vector Score\t-> {personal_info_score:.2f}")
+print(f"Fuzzy Word Score\t-> {fuzzy_word_score:.2f}")
 print(f"\nOverall Password Strength -> {strength_percent:.2f}/100")
 
 if strength_percent >= 80:
@@ -480,8 +490,8 @@ if not improved:
 #                       Phase 6 -> Plotting Graphs
 #--------------------------------------------------------------------------#
 #Radar Chart
-labels = ["Entropy", "Category", "Chromatic", "Transition", "Collision", "Input Vector", "Fuzzy"]
-stats = [entropy_score, category_score, chromatic_score, edge_score, collision_score, personal_info_score, fuzzy_word_score]
+labels = ["Entropy", "Category", "Chromatic", "Transition", "Collision", "Input Vector", "Fuzzy", "Length"]
+stats = [entropy_score, category_score, chromatic_score, edge_score, collision_score, personal_info_score, fuzzy_word_score,length_score]
 
 num_vars = len(labels)
 angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
