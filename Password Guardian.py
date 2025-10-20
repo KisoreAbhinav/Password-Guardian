@@ -281,6 +281,34 @@ else:
 #--------------------------------------------------------------------------#
 
 #---------------------------- Phase 3.9 -> Dictionary Fuzziness Check ----------------------------#
+exclude_list = []
+
+# Name fragments
+if len(user_name) >= 3:
+    for i in range(len(user_name)-2):
+        exclude_list.append(user_name[i:i+3].lower())
+
+# DOB fragments
+dob_clean = re.split(r'[-/]', user_dob)
+dob_parts = [p.lower() for p in dob_clean if p]
+
+# Month variants
+month_variants = []
+for part in dob_parts:
+    try:
+        month_num = int(part)
+        month_name = datetime(2000, month_num, 1).strftime("%b").lower()
+        month_full = datetime(2000, month_num, 1).strftime("%B").lower()
+        month_variants.extend([month_name, month_full])
+    except:
+        pass
+dob_parts.extend(month_variants)
+
+# Combine all exclusions
+exclude_list.extend(dob_parts)
+exclude_list = list(set([frag for frag in exclude_list if frag]))  # remove duplicates & empties
+
+# Load dictionary
 dictionary_file = os.path.join(BASE_DIR, "words.txt")
 with open(dictionary_file, "r", encoding="utf-8") as f:
     dictionary_words = [line.strip().lower() for line in f if line.strip()]
@@ -290,6 +318,8 @@ min_sub_len = 3
 max_similarity = 0
 
 for word in dictionary_words:
+    if word in exclude_list:  # skip user-specific words
+        continue
     for i in range(len(password_lower)):
         for j in range(i + min_sub_len, len(password_lower) + 1):
             substring = password_lower[i:j]
@@ -533,7 +563,7 @@ for i, label in enumerate(ax.get_xticklabels()):
     elif i == 4: # "Collision"
         label.set_position((label.get_position()[0], label.get_position()[1] - 0.05))
     elif i == 5: # "Input Vector"
-        label.set_position((label.get_position()[0], label.get_position()[1] - 0.075))
+        label.set_position((label.get_position()[0], label.get_position()[1] - 0.05))
 
 ax.grid(color="gray", linestyle="--", linewidth=0.6, alpha=0.5)
 ax.set_facecolor("#fdfdfd")
