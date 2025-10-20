@@ -10,6 +10,9 @@ import matplotlib.patches as mpatches
 from matplotlib.colors import LinearSegmentedColormap
 from datetime import datetime
 import re
+from difflib import SequenceMatcher
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 #--------------------------------------------------------------------------#
 
 
@@ -232,7 +235,7 @@ for c1, transitions in transition_matrix.items():
 #--------------------------------------------------------------------------#
 
 
-#--------------------------------------------------------------------------#
+
 #                 Phase 3.8 -> Personal Information Check
 #--------------------------------------------------------------------------#
 print("\nPersonal Information Check")
@@ -268,13 +271,77 @@ for part in dob_parts:
     if part and part in password_lower:
         flags.append(f"DOB element detected: '{part}'")
 if flags:
-    print("⚠️  Personal Info Detected in Password!")
+    print("Personal Info Detected in Password!")
     for f in flags:
         print(" -", f)
     personal_info_score = 0.0
 else:
-    print("✅ No personal information found in password.")
+    print("No personal information found in password.")
     personal_info_score = 1.0
+#--------------------------------------------------------------------------#
+
+#---------------------------- Phase 3.9 -> Dictionary Fuzziness Check ----------------------------#
+dictionary_file = os.path.join(BASE_DIR, "words.txt")
+with open(dictionary_file, "r", encoding="utf-8") as f:
+    dictionary_words = [line.strip().lower() for line in f if line.strip()]
+
+password_lower = password.lower()
+min_sub_len = 3 
+max_similarity = 0
+
+for word in dictionary_words:
+    for i in range(len(password_lower)):
+        for j in range(i + min_sub_len, len(password_lower) + 1):
+            substring = password_lower[i:j]
+            similarity = SequenceMatcher(None, substring, word).ratio()
+            max_similarity = max(max_similarity, similarity)
+
+fuzzy_word_score = 1 - max_similarity
+
+print("\nDictionary Fuzziness Report")
+print(f"Max similarity with dictionary words -> {max_similarity:.2f}")
+print(f"Fuzzy Word Score (1 = safe, 0 = contains dictionary words) -> {fuzzy_word_score:.2f}")
+
+#--------------------------------------------------------------------------#
+
+
+#                 Phase 3.10 -> Leaked Passwords Dataset Check (Fast)
+#--------------------------------------------------------------------------#
+print("\nLeaked Passwords Check")
+leaked_file = os.path.join(BASE_DIR, "leaked.txt")
+ 
+try:
+    with open(leaked_file, "r", encoding="utf-8", errors="ignore") as f:
+        leaked_list = [line.strip().lower() for line in f if line.strip()]
+except FileNotFoundError:
+    print(f"Leaked password file not found: '{leaked_file}'. Skipping check.")
+    leaked_list = []
+
+pw_low = password.lower()
+leaked_flag = False
+leaked_matches = []
+
+for leaked_word in leaked_list:
+    if leaked_word == pw_low:
+        leaked_flag = True
+        leaked_matches.append(("exact", leaked_word))
+        break
+    if len(leaked_word) >= 4 and leaked_word in pw_low:
+        leaked_flag = True
+        leaked_matches.append(("substring", leaked_word))
+        break
+    trans = str.maketrans({"4":"a","@":"a","3":"e","1":"l","0":"o","$":"s","5":"s","7":"t"})
+    if leaked_word in pw_low.translate(trans):
+        leaked_flag = True
+        leaked_matches.append(("leet-substring", leaked_word))
+        break
+
+if leaked_flag:
+    print("Leaked password indicator: password (or part of it) appears in dataset.")
+    for kind, w in leaked_matches:
+        print(f" - {kind} match -> '{w}'")
+else:
+    print("No match found in leaked-password dataset.")
 #--------------------------------------------------------------------------#
 
 
@@ -305,26 +372,27 @@ else:
     length_penalty = 1.0
 
 final_score = (
-    0.35 * entropy_score +
-    0.20 * length_score +
+    0.30 * entropy_score +
+    0.18 * length_score +
     0.15 * category_score +
     0.10 * chromatic_score +
     0.10 * edge_score +
     0.05 * collision_score +
-    0.05 * personal_info_score 
+    0.05 * personal_info_score+
+    0.07 * fuzzy_word_score
 )
 
 final_score *= length_penalty
 strength_percent = (final_score**1.2) * 100
 
 print("\nFinal Password Strength Report")
-print(f"Entropy Score       -> {entropy_score:.2f}")
-print(f"Length Score        -> {length_score:.2f}")
-print(f"Category Score      -> {category_score:.2f}")
-print(f"Chromatic Score     -> {chromatic_score:.2f}")
-print(f"Edge Score          -> {edge_score:.2f}")
-print(f"Collision Score     -> {collision_score:.2f}")
-print(f"Input Vector Score     -> {personal_info_score:.2f}")
+print(f"Entropy Score\t\t-> {entropy_score:.2f}")
+print(f"Length Score\t\t-> {length_score:.2f}")
+print(f"Category Score\t\t-> {category_score:.2f}")
+print(f"Chromatic Score\t\t-> {chromatic_score:.2f}")
+print(f"Edge Score\t\t-> {edge_score:.2f}")
+print(f"Collision Score\t\t-> {collision_score:.2f}")
+print(f"Input Vector Score\t-> {personal_info_score:.2f}")
 print(f"\nOverall Password Strength -> {strength_percent:.2f}/100")
 
 if strength_percent >= 80:
@@ -382,8 +450,9 @@ if not improved:
 #                       Phase 6 -> Plotting Graphs
 #--------------------------------------------------------------------------#
 #Radar Chart
-labels = ["Entropy", "Category", "Chromatic", "Transition", "Collision", "Input Vector"]
-stats = [entropy_score, category_score, chromatic_score, edge_score, collision_score, personal_info_score]
+labels = ["Entropy", "Category", "Chromatic", "Transition", "Collision", "Input Vector", "Fuzzy"]
+stats = [entropy_score, category_score, chromatic_score, edge_score, collision_score, personal_info_score, fuzzy_word_score]
+
 num_vars = len(labels)
 angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
 stats += stats[:1]
@@ -436,7 +505,6 @@ ax.set_theta_offset(np.pi / 2)
 ax.set_theta_direction(-1)
 ax.set_ylim(0, 1.05)
 
-# remove square frame
 ax.set_frame_on(False)
 ax.patch.set_visible(False)
 for spine in ax.spines.values():
@@ -464,6 +532,8 @@ for i, label in enumerate(ax.get_xticklabels()):
         label.set_position((label.get_position()[0], label.get_position()[1] - 0.01))
     elif i == 4: # "Collision"
         label.set_position((label.get_position()[0], label.get_position()[1] - 0.05))
+    elif i == 5: # "Input Vector"
+        label.set_position((label.get_position()[0], label.get_position()[1] - 0.075))
 
 ax.grid(color="gray", linestyle="--", linewidth=0.6, alpha=0.5)
 ax.set_facecolor("#fdfdfd")
